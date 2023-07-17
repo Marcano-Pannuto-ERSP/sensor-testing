@@ -31,6 +31,17 @@ class BMP280:
         self.cs.value(1)
         return data
     
+    def read_register(self, addr, size):
+        self.cs.value(0)
+        addr |= 0x80
+        self.spi.write(bytes([addr]))
+        data = self.spi.read(size)
+        self.cs.value(1)
+        temp = 0
+        for i in range(size):
+            temp += int(data[i]) << (8 * i)
+        return temp
+    
     # Get the temperature from the registers
     def get_adc_temp(self):
         self.cs.value(0)
@@ -54,8 +65,11 @@ class BMP280:
         temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return temp
 
-    def bmp280_compensate_T_int32 (adc_T):
-        var1 = ((((adc_T>>3) - (dig_T1<<1))) * (dig_T2)) >> 11
+    def bmp280_compensate_T_int32(self, adc_T):
+        dig_T1 = self.read_register(0x88, 2)
+        dig_T2 = self.read_register(0x8A, 2)
+        dig_T3 = self.read_register(0x8C, 2)
+        var1 = (((adc_T>>3) - (dig_T1<<1)) * (dig_T2)) >> 11
         var2 = (((((adc_T>>4) - (dig_T1)) * ((adc_T>>4) - (dig_T1)))>> 12) *(dig_T3)) >> 14
         t_fine = var1 + var2
         T = (t_fine * 5 + 128) >> 8
