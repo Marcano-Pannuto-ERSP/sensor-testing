@@ -24,6 +24,14 @@ class BMP280:
         self.spi.deinit()
         self.cs.init(Pin.IN)
 
+    def read_id(self):
+        self.cs.value(0)
+        self.spi.write(bytes([0xD0]))
+        data = self.spi.read(1)
+        self.cs.value(1)
+        return data
+
+    """
     # Write the command then read size bytes
     def read_bulk(self, command, size):
         self.cs.value(0)
@@ -40,3 +48,4 @@ class BMP280:
         data = self.spi.read(size)
         self.cs.value(1)
         return data
+    """
