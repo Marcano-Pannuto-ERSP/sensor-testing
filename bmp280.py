@@ -30,6 +30,23 @@ class BMP280:
         data = self.spi.read(1)
         self.cs.value(1)
         return data
+    
+    # Get the temperature from the registers
+    def get_adc_temp(self):
+        self.cs.value(0)
+
+        # take out of sleep mode
+        
+
+        # set temp oversampling
+
+        self.spi.write(bytes([0xFA]))
+        data = self.spi.read(3)
+        self.cs.value(1)
+        print(data)
+        # return data
+        temp = int(data[0]) << 12 + int(data[1]) << 4 + int(data[2]) >> 4
+        return temp
 
     """
     # Write the command then read size bytes
