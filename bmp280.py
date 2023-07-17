@@ -36,16 +36,22 @@ class BMP280:
         self.cs.value(0)
 
         # take out of sleep mode
-        
-
         # set temp oversampling
+        activate = 0b00100011
 
+        # write temp sampling to the register
+        addr = 0xF4 & 0x7F
+        self.spi.write(bytes([addr, activate]))
+        self.cs.value(1)
+
+        self.cs.value(0)
         self.spi.write(bytes([0xFA]))
         data = self.spi.read(3)
         self.cs.value(1)
-        print(data)
+        print([hex(int(x)) for x in data])
+
         # return data
-        temp = int(data[0]) << 12 + int(data[1]) << 4 + int(data[2]) >> 4
+        temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return temp
 
     """
