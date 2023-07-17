@@ -54,6 +54,13 @@ class BMP280:
         temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return temp
 
+    def bmp280_compensate_T_int32 (adc_T):
+        var1 = ((((adc_T>>3) - (dig_T1<<1))) * (dig_T2)) >> 11
+        var2 = (((((adc_T>>4) - (dig_T1)) * ((adc_T>>4) - (dig_T1)))>> 12) *(dig_T3)) >> 14
+        t_fine = var1 + var2
+        T = (t_fine * 5 + 128) >> 8
+        return T
+
     """
     # Write the command then read size bytes
     def read_bulk(self, command, size):
