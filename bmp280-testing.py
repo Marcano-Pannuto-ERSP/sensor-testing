@@ -14,7 +14,7 @@ data = 0
 while(i < 3):
     data = sensor.get_adc_temp()
     print(data)
-    time.sleep(1)
+    time.sleep(0.05)
     i += 1
 print(hex(sensor.read_register(0xF3, 2)))
 print(sensor.bmp280_compensate_T_int32(data))

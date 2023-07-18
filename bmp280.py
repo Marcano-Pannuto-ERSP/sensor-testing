@@ -65,15 +65,36 @@ class BMP280:
         temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return temp
 
-    def bmp280_compensate_T_int32(self, adc_T):
+    def bmp280_compensate_T_int32(self, raw_temp):
         dig_T1 = self.read_register(0x88, 2)
         dig_T2 = self.read_register(0x8A, 2)
         dig_T3 = self.read_register(0x8C, 2)
-        var1 = (((adc_T>>3) - (dig_T1<<1)) * (dig_T2)) >> 11
-        var2 = (((((adc_T>>4) - (dig_T1)) * ((adc_T>>4) - (dig_T1)))>> 12) *(dig_T3)) >> 14
-        t_fine = var1 + var2
-        T = (t_fine * 5 + 128) >> 8
-        return T
+        # var1 = (((raw_temp>>3) - (dig_T1<<1)) * (dig_T2)) >> 11
+        # var2 = (((((raw_temp>>4) - (dig_T1)) * ((raw_temp>>4) - (dig_T1)))>> 12) *(dig_T3)) >> 14
+        # t_fine = var1 + var2
+        # T = (t_fine * 5 + 128) >> 8
+        # return T
+    
+        # From C API
+        var1 = (( raw_temp) / 16384.0 - ( dig_T1) / 1024.0) * dig_T2
+        var2 = ((( raw_temp) / 131072.0 - ( dig_T1) / 8192.0) * (( raw_temp) / 131072.0 - ( dig_T1) / 8192.0)) * (dig_T3)
+
+        t_fine = int(var1 + var2)       # not used here?
+        temperature = (var1 + var2) / 5120.0
+
+        # if (temperature < BMP2_MIN_TEMP_DOUBLE)
+        # {
+        #     temperature = BMP2_MIN_TEMP_DOUBLE;
+        #     rslt = BMP2_W_MIN_TEMP;
+        # }
+
+        # if (temperature > BMP2_MAX_TEMP_DOUBLE)
+        # {
+        #     temperature = BMP2_MAX_TEMP_DOUBLE;
+        #     rslt = BMP2_W_MAX_TEMP;
+        # }
+
+        return temperature
 
     """
     # Write the command then read size bytes
