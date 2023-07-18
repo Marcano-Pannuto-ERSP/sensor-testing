@@ -45,7 +45,7 @@ class BMP280:
 
         # take out of sleep mode
         # set temp oversampling
-        activate = 0b00100011
+        activate = 0b00100001
 
         # write temp sampling to the register
         addr = 0xF4 & 0x7F
@@ -61,7 +61,30 @@ class BMP280:
         # return data
         temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return temp
+    
+    def get_adc_pressure(self):
+        self.cs.value(0)
 
+        # take out of sleep mode
+        # set pressure oversampling
+        activate = 0b00000101
+
+        # write pressure sampling to the register
+        addr = 0xF4 & 0x7F
+        self.spi.write(bytes([addr, activate]))
+        self.cs.value(1)
+
+        self.cs.value(0)
+        self.spi.write(bytes([0xF7]))
+        data = self.spi.read(3)
+        self.cs.value(1)
+        print([hex(int(x)) for x in data])
+
+        # return data
+        pressure = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
+        return pressure
+
+    # Accuracy of +- 1 celsius
     def bmp280_compensate_T_int32(self, raw_temp):
         dig_T1 = ustruct.unpack('<H', self.read_register(0x88, 2))[0]
         dig_T2 = ustruct.unpack('<h', self.read_register(0x8A, 2))[0]
@@ -72,19 +95,6 @@ class BMP280:
         var1 = ((raw_temp) / 16384.0 - (dig_T1) / 1024.0) * dig_T2
         var2 = (((raw_temp) / 131072.0 - (dig_T1) / 8192.0) * ((raw_temp) / 131072.0 - (dig_T1) / 8192.0)) * (dig_T3)
 
-        t_fine = int(var1 + var2)       # not used here?
         temperature = (var1 + var2) / 5120.0
-
-        # if (temperature < BMP2_MIN_TEMP_DOUBLE)
-        # {
-        #     temperature = BMP2_MIN_TEMP_DOUBLE;
-        #     rslt = BMP2_W_MIN_TEMP;
-        # }
-
-        # if (temperature > BMP2_MAX_TEMP_DOUBLE)
-        # {
-        #     temperature = BMP2_MAX_TEMP_DOUBLE;
-        #     rslt = BMP2_W_MAX_TEMP;
-        # }
 
         return temperature
