@@ -11,6 +11,7 @@ SDD - 4
 
 from machine import Pin, SPI
 import time
+import ustruct
 
 class BMP280:
     def __init__(self, pin):
@@ -37,10 +38,13 @@ class BMP280:
         self.spi.write(bytes([addr]))
         data = self.spi.read(size)
         self.cs.value(1)
-        temp = 0
-        for i in range(size):
-            temp += int(data[i]) << (8 * i)
-        return temp
+        return data
+        # temp = 0
+        # for i in range(size):
+        #     temp += int(data[i]) << (8 * i)
+        # return temp
+        
+        # return int.from_bytes(data, 'little', True)
     
     # Get the temperature from the registers
     def get_adc_temp(self):
@@ -66,9 +70,11 @@ class BMP280:
         return temp
 
     def bmp280_compensate_T_int32(self, raw_temp):
-        dig_T1 = self.read_register(0x88, 2)
-        dig_T2 = self.read_register(0x8A, 2)
-        dig_T3 = self.read_register(0x8C, 2)
+        dig_T1 = ustruct.unpack('<H', self.read_register(0x88, 2))[0]
+        dig_T2 = ustruct.unpack('<h', self.read_register(0x8A, 2))[0]
+        dig_T3 = ustruct.unpack('<h', self.read_register(0x8C, 2))[0]
+        print(str(dig_T1) + " " + str(dig_T2) + " " + str(dig_T3))
+
         # var1 = (((raw_temp>>3) - (dig_T1<<1)) * (dig_T2)) >> 11
         # var2 = (((((raw_temp>>4) - (dig_T1)) * ((raw_temp>>4) - (dig_T1)))>> 12) *(dig_T3)) >> 14
         # t_fine = var1 + var2
@@ -76,8 +82,8 @@ class BMP280:
         # return T
     
         # From C API
-        var1 = (( raw_temp) / 16384.0 - ( dig_T1) / 1024.0) * dig_T2
-        var2 = ((( raw_temp) / 131072.0 - ( dig_T1) / 8192.0) * (( raw_temp) / 131072.0 - ( dig_T1) / 8192.0)) * (dig_T3)
+        var1 = ((raw_temp) / 16384.0 - (dig_T1) / 1024.0) * dig_T2
+        var2 = (((raw_temp) / 131072.0 - (dig_T1) / 8192.0) * ((raw_temp) / 131072.0 - (dig_T1) / 8192.0)) * (dig_T3)
 
         t_fine = int(var1 + var2)       # not used here?
         temperature = (var1 + var2) / 5120.0
