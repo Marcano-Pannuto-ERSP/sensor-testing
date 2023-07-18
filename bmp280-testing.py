@@ -21,3 +21,4 @@ while(i < 3):
     i += 1
 print(hex(ustruct.unpack('<H', sensor.read_register(0xF3, 2))[0]))
 print(sensor.bmp280_compensate_T_int32(data))
+print(sensor.bmp280_compensate_P_double(data2))

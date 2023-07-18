@@ -84,17 +84,51 @@ class BMP280:
         pressure = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
         return pressure
 
-    # Accuracy of +- 1 celsius
-    def bmp280_compensate_T_int32(self, raw_temp):
+    def get_t_fine(self, raw_temp):
         dig_T1 = ustruct.unpack('<H', self.read_register(0x88, 2))[0]
         dig_T2 = ustruct.unpack('<h', self.read_register(0x8A, 2))[0]
         dig_T3 = ustruct.unpack('<h', self.read_register(0x8C, 2))[0]
+
         print(str(dig_T1) + " " + str(dig_T2) + " " + str(dig_T3))
     
-        # From C API
         var1 = ((raw_temp) / 16384.0 - (dig_T1) / 1024.0) * dig_T2
         var2 = (((raw_temp) / 131072.0 - (dig_T1) / 8192.0) * ((raw_temp) / 131072.0 - (dig_T1) / 8192.0)) * (dig_T3)
+        t_fine = var1 + var2 
+        return t_fine
 
-        temperature = (var1 + var2) / 5120.0
+    # Accuracy of +- 1 celsius
+    def bmp280_compensate_T_int32(self, raw_temp):
+        t_fine = self.get_t_fine(raw_temp)
+        temperature = (t_fine) / 5120.0
 
         return temperature
+
+    # Returns pressure in Pa as double. Output value of “96386.2” equals 96386.2 Pa = 963.862 hPa
+    def bmp280_compensate_P_double(self, raw_press, raw_temp):
+        t_fine = self.get_t_fine(raw_temp)
+        dig_P1 = ustruct.unpack('<H', self.read_register(0x8E, 2))[0]
+        dig_P2 = ustruct.unpack('<h', self.read_register(0x90, 2))[0]
+        dig_P3 = ustruct.unpack('<h', self.read_register(0x92, 2))[0]
+        dig_P4 = ustruct.unpack('<h', self.read_register(0x94, 2))[0]
+        dig_P5 = ustruct.unpack('<h', self.read_register(0x96, 2))[0]
+        dig_P6 = ustruct.unpack('<h', self.read_register(0x98, 2))[0]
+        dig_P7 = ustruct.unpack('<h', self.read_register(0x9A, 2))[0]
+        dig_P8 = ustruct.unpack('<h', self.read_register(0x9C, 2))[0]
+        dig_P9 = ustruct.unpack('<h', self.read_register(0x9E, 2))[0]
+
+
+
+        var1 = (t_fine/2.0) - 64000.0
+        var2 = var1 * var1 * (dig_P6) / 32768.0
+        var2 = var2 + var1 * (dig_P5) * 2.0
+        var2 = (var2/4.0)+((dig_P4) * 65536.0)
+        var1 = ((dig_P3) * var1 * var1 / 524288.0 + (dig_P2) * var1) / 524288.0
+        var1 = (1.0 + var1 / 32768.0)*(dig_P1)
+        if (var1 == 0.0):
+            return 0;  #avoid exception caused by division by zero
+        p = 1048576.0 - raw_press
+        p = (p - (var2 / 4096.0)) * 6250.0 / var1
+        var1 = (dig_P9) * p * p / 2147483648.0
+        var2 = p * (dig_P8) / 32768.0
+        p = p + (var1 + var2 + (dig_P7)) / 16.0
+        return p
