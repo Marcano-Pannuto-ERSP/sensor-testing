@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText 2023 Kristin Ebuengan
+# SPDX-FileCopyrightText 2023 Melody Gill
+# SPDX-FileCopyrightText 2023 Gabriel Marcano
+
 from machine import Pin
 from bmp280 import *
 import time
@@ -21,4 +26,4 @@ while(i < 3):
     i += 1
 print(hex(ustruct.unpack('<H', sensor.read_register(0xF3, 2))[0]))
 print(sensor.bmp280_compensate_T_int32(data))
-print(sensor.bmp280_compensate_P_double(data2))
+print(sensor.bmp280_compensate_P_double(data2, data))

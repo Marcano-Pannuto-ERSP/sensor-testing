@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText 2023 Kristin Ebuengan
+# SPDX-FileCopyrightText 2023 Melody Gill
+# SPDX-FileCopyrightText 2023 Gabriel Marcano
+
 """
 Library functions in Micropython to run on the RPi Pico.
 Lots copied from rtc.py
@@ -115,8 +120,6 @@ class BMP280:
         dig_P7 = ustruct.unpack('<h', self.read_register(0x9A, 2))[0]
         dig_P8 = ustruct.unpack('<h', self.read_register(0x9C, 2))[0]
         dig_P9 = ustruct.unpack('<h', self.read_register(0x9E, 2))[0]
-
-
 
         var1 = (t_fine/2.0) - 64000.0
         var2 = var1 * var1 * (dig_P6) / 32768.0
