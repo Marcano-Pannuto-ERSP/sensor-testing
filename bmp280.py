@@ -61,7 +61,7 @@ class BMP280:
         self.spi.write(bytes([0xFA]))
         data = self.spi.read(3)
         self.cs.value(1)
-        print([hex(int(x)) for x in data])
+        # print([hex(int(x)) for x in data])
 
         # return data
         temp = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
@@ -83,7 +83,7 @@ class BMP280:
         self.spi.write(bytes([0xF7]))
         data = self.spi.read(3)
         self.cs.value(1)
-        print([hex(int(x)) for x in data])
+        # print([hex(int(x)) for x in data])
 
         # return data
         pressure = (int(data[0]) << 12) + (int(data[1]) << 4) + (int(data[2]) >> 4)
